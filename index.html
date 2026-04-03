@@ -3,51 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phân Tích Số - Đồng Bộ Firebase</title>
+    <title>Phân Tích Số - One Click</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a73e8; text-align: center; margin-top: 0; text-transform: uppercase; font-size: 20px; }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
         
         textarea { width: 100%; height: 180px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; }
         textarea:focus { border-color: #1a73e8; outline: none; }
         
-        .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic; }
+        .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic; min-height: 18px; }
         .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        button { flex: 1; min-width: 120px; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.1s; }
-        button:active { transform: scale(0.98); }
+        button { flex: 1; min-width: 120px; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 14px; }
+        button:active { transform: scale(0.95); }
         
-        .btn-analyze { background-color: #1a73e8; color: white; }
-        .btn-paste { background-color: #34a853; color: white; }
+        .btn-paste { background-color: #34a853; color: white; flex: 2; font-size: 16px; } /* Nút dán to hơn để dễ bấm */
         .btn-clear { background-color: #ea4335; color: white; }
 
         .result { display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
-        .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card h3 { margin-top: 0; font-size: 0.95rem; color: #5f6368; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; margin-bottom: 10px; }
-        .highlight { font-size: 1.3rem; font-weight: 800; color: #1a73e8; font-family: monospace; }
-        .grid-list { font-family: monospace; font-size: 0.9rem; line-height: 1.5; color: #444; }
+        .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #1a73e8; }
+        .card h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #5f6368; text-transform: uppercase; }
+        .highlight { font-size: 1.4rem; font-weight: 800; color: #1a73e8; font-family: 'Courier New', Courier, monospace; }
+        .grid-list { font-family: monospace; font-size: 0.95rem; line-height: 1.6; color: #333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Phân Tích & Đồng Bộ Số</h2>
-    <div id="syncStatus" class="status-sync">Đang kết nối...</div>
+    <h2>Phân Tích & Đồng Bộ</h2>
+    <div id="syncStatus" class="status-sync">Đang kết nối Firebase...</div>
     
-    <textarea id="inputData" placeholder="Dán dãy số vào đây..."></textarea>
+    <textarea id="inputData" placeholder="Dữ liệu sẽ tự động phân tích khi bạn dán hoặc nhập..."></textarea>
     
     <div class="button-group">
-        <button class="btn-paste" onclick="pasteData()">📋 Dán & Lưu</button>
-        <button class="btn-analyze" onclick="analyzeNumbers()">🚀 Phân tích</button>
-        <button class="btn-clear" onclick="clearAll()">🗑️ Xóa hết</button>
+        <button class="btn-paste" onclick="pasteAndAnalyze()">📋 DÁN & PHÂN TÍCH LUÔN</button>
+        <button class="btn-clear" onclick="clearAll()">🗑️ XÓA HẾT</button>
     </div>
 
     <div id="output" class="result">
         <div class="card">
-            <h3>T</h3>
+            <h3></h3>
             <p id="totalCount" class="highlight">0</p>
         </div>
         <div class="card">
@@ -72,7 +70,6 @@
 </div>
 
 <script>
-// --- CẤU HÌNH FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyD-tbxT6acKrTgAqNxHyDZHW2gD06KX1CI",
     authDomain: "my-work-a159e.firebaseapp.com",
@@ -89,54 +86,55 @@ const docRef = db.collection("app_analysis").doc('current_data');
 const inputArea = document.getElementById('inputData');
 const syncStatus = document.getElementById('syncStatus');
 
-// --- FIREBASE SYNC ---
+// Lưu Firebase
 async function saveToFirebase(content) {
     syncStatus.innerText = "☁️ Đang lưu...";
     try {
         await docRef.set({ text: content, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
         syncStatus.innerText = "✅ Đã đồng bộ";
-    } catch (e) {
-        syncStatus.innerText = "❌ Lỗi lưu dữ liệu";
-    }
+    } catch (e) { syncStatus.innerText = "❌ Lỗi lưu"; }
 }
 
+// Tự động phân tích khi gõ tay
 let typingTimer;
 inputArea.oninput = () => {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
         saveToFirebase(inputArea.value);
         analyzeNumbers();
-    }, 800);
+    }, 500);
 };
 
+// Tải dữ liệu ban đầu
 async function loadData() {
-    syncStatus.innerText = "📂 Đang tải...";
     try {
         const doc = await docRef.get();
         if (doc.exists) {
             inputArea.value = doc.data().text || "";
-            syncStatus.innerText = "✅ Đồng bộ hoàn tất";
+            syncStatus.innerText = "✅ Đã tải dữ liệu";
             analyzeNumbers();
         }
-    } catch (e) { syncStatus.innerText = "❌ Lỗi tải"; }
+    } catch (e) { syncStatus.innerText = "❌ Lỗi kết nối"; }
 }
 
-// --- LOGIC FUNCTIONS ---
-async function pasteData() {
+// --- HÀM QUAN TRỌNG: BẤM 1 LẦN DÁN VÀ CHẠY LUÔN ---
+async function pasteAndAnalyze() {
     try {
         const text = await navigator.clipboard.readText();
         inputArea.value = text;
+        // Chạy cùng lúc 2 việc: Lưu lên mạng và Phân tích ra màn hình
         saveToFirebase(text);
         analyzeNumbers();
-    } catch (err) { alert("Lỗi truy cập clipboard. Hãy dùng Ctrl+V."); }
+    } catch (err) {
+        alert("Không thể truy cập bộ nhớ tạm. Hãy dùng phím tắt Ctrl+V.");
+    }
 }
 
-// Hàm Xóa (Đã bỏ xác nhận confirm)
 function clearAll() {
     inputArea.value = '';
-    saveToFirebase(''); // Cập nhật rỗng lên Firebase
+    saveToFirebase('');
     document.getElementById('output').style.display = 'none';
-    syncStatus.innerText = "🗑️ Đã xóa sạch dữ liệu";
+    syncStatus.innerText = "🗑️ Đã xóa sạch";
 }
 
 function analyzeNumbers() {
@@ -172,8 +170,8 @@ function analyzeNumbers() {
         if(heads[i]) hHtml += `ầ ${i}: <b>${heads[i]}</b><br>`;
         if(tails[i]) tHtml += `uô ${i}: <b>${tails[i]}</b><br>`;
     }
-    document.getElementById('headStats').innerHTML = hHtml || '...';
-    document.getElementById('tailStats').innerHTML = tHtml || '...';
+    document.getElementById('headStats').innerHTML = hHtml || 'Trống';
+    document.getElementById('tailStats').innerHTML = tHtml || 'Trống';
 }
 
 loadData();
