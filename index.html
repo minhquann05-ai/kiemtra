@@ -10,13 +10,15 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a73e8; text-align: center; margin-top: 0; }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; text-transform: uppercase; font-size: 20px; }
         
-        textarea { width: 100%; height: 180px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; }
+        textarea { width: 100%; height: 180px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; }
+        textarea:focus { border-color: #1a73e8; outline: none; }
         
-        .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; }
+        .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic; }
         .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        button { flex: 1; min-width: 120px; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button { flex: 1; min-width: 120px; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
         
         .btn-analyze { background-color: #1a73e8; color: white; }
         .btn-paste { background-color: #34a853; color: white; }
@@ -24,18 +26,18 @@
 
         .result { display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
         .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card h3 { margin-top: 0; font-size: 0.95rem; color: #5f6368; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; }
-        .highlight { font-size: 1.2rem; font-weight: bold; color: #1a73e8; }
-        .grid-list { font-family: monospace; font-size: 0.9rem; }
+        .card h3 { margin-top: 0; font-size: 0.95rem; color: #5f6368; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; margin-bottom: 10px; }
+        .highlight { font-size: 1.3rem; font-weight: 800; color: #1a73e8; font-family: monospace; }
+        .grid-list { font-family: monospace; font-size: 0.9rem; line-height: 1.5; color: #444; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Phân Tích & Đồng Bộ</h2>
-    <div id="syncStatus" class="status-sync">Đang kiểm tra kết nối Firebase...</div>
+    <h2>Phân Tích & Đồng Bộ Số</h2>
+    <div id="syncStatus" class="status-sync">Đang kết nối...</div>
     
-    <textarea id="inputData" placeholder="Dán dãy số vào đây... Dữ liệu sẽ tự động lưu lên đám mây."></textarea>
+    <textarea id="inputData" placeholder="Dán dãy số vào đây..."></textarea>
     
     <div class="button-group">
         <button class="btn-paste" onclick="pasteData()">📋 Dán & Lưu</button>
@@ -59,18 +61,18 @@
             <p>Nhỏ: <span id="smallCount" class="highlight">0</span></p>
         </div>
         <div class="card">
-            <h3>Đầu</h3>
+            <h3>Thống kê Đầu</h3>
             <div id="headStats" class="grid-list"></div>
         </div>
         <div class="card">
-            <h3>Đuôi</h3>
+            <h3>Thống kê Đuôi</h3>
             <div id="tailStats" class="grid-list"></div>
         </div>
     </div>
 </div>
 
 <script>
-// --- CẤU HÌNH FIREBASE (DÙNG CHUNG CỦA BẠN) ---
+// --- CẤU HÌNH FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyD-tbxT6acKrTgAqNxHyDZHW2gD06KX1CI",
     authDomain: "my-work-a159e.firebaseapp.com",
@@ -82,67 +84,59 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-// Tạo một document riêng để không lẫn với web kia
 const docRef = db.collection("app_analysis").doc('current_data');
 
 const inputArea = document.getElementById('inputData');
 const syncStatus = document.getElementById('syncStatus');
 
-// --- HÀM LƯU DỮ LIỆU LÊN FIREBASE ---
+// --- FIREBASE SYNC ---
 async function saveToFirebase(content) {
     syncStatus.innerText = "☁️ Đang lưu...";
     try {
         await docRef.set({ text: content, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
         syncStatus.innerText = "✅ Đã đồng bộ";
     } catch (e) {
-        syncStatus.innerText = "❌ Lỗi đồng bộ";
-        console.error(e);
+        syncStatus.innerText = "❌ Lỗi lưu dữ liệu";
     }
 }
 
-// Tự động lưu khi gõ (giống web cũ của bạn)
 let typingTimer;
 inputArea.oninput = () => {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
         saveToFirebase(inputArea.value);
-        analyzeNumbers(); // Tự động phân tích luôn khi gõ xong
-    }, 1000);
+        analyzeNumbers();
+    }, 800);
 };
 
-// --- HÀM TẢI DỮ LIỆU KHI MỞ WEB ---
 async function loadData() {
-    syncStatus.innerText = "📂 Đang tải dữ liệu cũ...";
+    syncStatus.innerText = "📂 Đang tải...";
     try {
         const doc = await docRef.get();
         if (doc.exists) {
             inputArea.value = doc.data().text || "";
-            syncStatus.innerText = "✅ Tải dữ liệu thành công";
+            syncStatus.innerText = "✅ Đồng bộ hoàn tất";
             analyzeNumbers();
-        } else {
-            syncStatus.innerText = "🆕 Sẵn sàng (Chưa có dữ liệu)";
         }
-    } catch (e) {
-        syncStatus.innerText = "❌ Không thể tải dữ liệu";
-    }
+    } catch (e) { syncStatus.innerText = "❌ Lỗi tải"; }
 }
 
-// --- CÁC HÀM LOGIC ---
+// --- LOGIC FUNCTIONS ---
 async function pasteData() {
     try {
         const text = await navigator.clipboard.readText();
         inputArea.value = text;
         saveToFirebase(text);
         analyzeNumbers();
-    } catch (err) { alert("Hãy dùng Ctrl+V để dán."); }
+    } catch (err) { alert("Lỗi truy cập clipboard. Hãy dùng Ctrl+V."); }
 }
 
+// Hàm Xóa (Đã bỏ xác nhận confirm)
 function clearAll() {
-    if(confirm("Bạn có chắc chắn muốn xóa sạch dữ liệu trên mọi thiết bị?")) {
-        inputArea.value = '';
-        saveToFirebase('');
-        document.getElementById('output').style.display = 'none';
-    }
+    inputArea.value = '';
+    saveToFirebase(''); // Cập nhật rỗng lên Firebase
+    document.getElementById('output').style.display = 'none';
+    syncStatus.innerText = "🗑️ Đã xóa sạch dữ liệu";
 }
 
 function analyzeNumbers() {
@@ -167,7 +161,7 @@ function analyzeNumbers() {
     });
 
     document.getElementById('output').style.display = 'grid';
-    document.getElementById('totalCount').innerText = numbers.length;
+    document.getElementById('totalCount').innerText = numbers.length + " số";
     document.getElementById('evenCount').innerText = even;
     document.getElementById('oddCount').innerText = odd;
     document.getElementById('bigCount').innerText = big;
@@ -182,9 +176,7 @@ function analyzeNumbers() {
     document.getElementById('tailStats').innerHTML = tHtml || '...';
 }
 
-// Chạy tải dữ liệu khi vừa mở trang
 loadData();
-
 </script>
 </body>
 </html>
