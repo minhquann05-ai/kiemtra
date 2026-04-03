@@ -3,31 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công cụ Phân tích Dãy số</title>
+    <title>Công cụ Phân tích Dãy số v2</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; line-height: 1.6; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        .result { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .card { background: #e9ecef; padding: 15px; border-radius: 6px; }
-        .card h3 { margin-top: 0; color: #333; font-size: 1rem; border-bottom: 1px dotted #999; }
-        .highlight { font-weight: bold; color: #d9534f; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; line-height: 1.6; background-color: #f0f2f5; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; text-align: center; }
+        textarea { width: 100%; height: 180px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; }
+        textarea:focus { border-color: #1a73e8; outline: none; }
+        
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        button { flex: 1; min-width: 120px; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        
+        .btn-analyze { background-color: #1a73e8; color: white; }
+        .btn-paste { background-color: #34a853; color: white; }
+        .btn-clear { background-color: #ea4335; color: white; }
+        button:hover { opacity: 0.9; }
+
+        .result { display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; font-size: 0.95rem; color: #5f6368; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px; margin-bottom: 12px; }
+        .highlight { font-size: 1.2rem; font-weight: bold; color: #1a73e8; }
+        .grid-list { font-family: monospace; font-size: 0.9rem; color: #444; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Phân tích số lượng</h2>
-    <p>Dán dãy số của bạn vào đây (hỗ trợ cả chữ và số lẫn lộn):</p>
-    <textarea id="inputData" placeholder="Ví dụ: Đầu 0: 01 03 04..."></textarea>
-    <button onclick="analyzeNumbers()">Phân tích ngay</button>
+    <h2>Phân tích Số liệu Thông minh</h2>
+    
+    <textarea id="inputData" placeholder="Dán dãy số của bạn tại đây... (Ví dụ: Đầu 0: 01 02 03)"></textarea>
+    
+    <div class="button-group">
+        <button class="btn-paste" onclick="pasteData()">📋 Dán dữ liệu</button>
+        <button class="btn-analyze" onclick="analyzeNumbers()">🚀 Phân tích ngay</button>
+        <button class="btn-clear" onclick="clearAll()">🗑️ Xóa dữ liệu</button>
+    </div>
 
-    <div id="output" class="result" style="display:none;">
+    <div id="output" class="result">
         <div class="card">
-            <h3>Tổng cộng</h3>
-            <p id="totalCount">Số lượng: <span class="highlight">0</span></p>
+            <h3>Tổng số lượng</h3>
+            <p id="totalCount" class="highlight">0</p>
         </div>
         <div class="card">
             <h3>Chẵn - Lẻ</h3>
@@ -35,29 +52,45 @@
             <p>Lẻ: <span id="oddCount" class="highlight">0</span></p>
         </div>
         <div class="card">
-            <h3>To - Nhỏ (Ngưỡng 50)</h3>
-            <p>To (>=50): <span id="bigCount" class="highlight">0</span></p>
-            <p>Nhỏ (<50): <span id="smallCount" class="highlight">0</span></p>
+            <h3>To - Nhỏ (50)</h3>
+            <p>To: <span id="bigCount" class="highlight">0</span></p>
+            <p>Nhỏ: <span id="smallCount" class="highlight">0</span></p>
         </div>
         <div class="card">
             <h3>Thống kê Đầu</h3>
-            <div id="headStats" style="font-size: 0.9rem;"></div>
+            <div id="headStats" class="grid-list"></div>
         </div>
         <div class="card">
             <h3>Thống kê Đuôi</h3>
-            <div id="tailStats" style="font-size: 0.9rem;"></div>
+            <div id="tailStats" class="grid-list"></div>
         </div>
     </div>
 </div>
 
 <script>
+// Hàm Dán dữ liệu từ Clipboard
+async function pasteData() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('inputData').value = text;
+    } catch (err) {
+        alert("Trình duyệt không cho phép truy cập Clipboard. Hãy dùng Ctrl+V.");
+    }
+}
+
+// Hàm Xóa dữ liệu
+function clearAll() {
+    document.getElementById('inputData').value = '';
+    document.getElementById('output').style.display = 'none';
+}
+
+// Hàm Phân tích
 function analyzeNumbers() {
     const text = document.getElementById('inputData').value;
-    // Tìm tất cả các cụm 2 chữ số
     const numbers = text.match(/\d{2}/g) || [];
     
     if (numbers.length === 0) {
-        alert("Không tìm thấy số nào hợp lệ (định dạng 2 chữ số)!");
+        alert("Vui lòng nhập hoặc dán dãy số có 2 chữ số!");
         return;
     }
 
@@ -66,36 +99,30 @@ function analyzeNumbers() {
 
     numbers.forEach(numStr => {
         const n = parseInt(numStr);
-        const h = numStr[0]; // Chữ số đầu
-        const t = numStr[1]; // Chữ số đuôi
+        const h = numStr[0]; 
+        const t = numStr[1];
 
-        // Đếm chẵn lẻ
         if (n % 2 === 0) even++; else odd++;
-        
-        // Đếm to nhỏ (Quy ước phổ biến: 00-49 là nhỏ, 50-99 là to)
         if (n >= 50) big++; else small++;
 
-        // Đếm đầu đuôi
         heads[h] = (heads[h] || 0) + 1;
         tails[t] = (tails[t] || 0) + 1;
     });
 
-    // Hiển thị kết quả
     document.getElementById('output').style.display = 'grid';
-    document.getElementById('totalCount').innerHTML = `Số lượng: <span class="highlight">${numbers.length}</span>`;
+    document.getElementById('totalCount').innerText = numbers.length + " số";
     document.getElementById('evenCount').innerText = even;
     document.getElementById('oddCount').innerText = odd;
     document.getElementById('bigCount').innerText = big;
     document.getElementById('smallCount').innerText = small;
 
-    // Render Đầu/Đuôi
     let headHtml = '', tailHtml = '';
     for(let i=0; i<=9; i++) {
-        if(heads[i]) headHtml += `Đầu ${i}: ${heads[i]} số<br>`;
-        if(tails[i]) tailHtml += `Đuôi ${i}: ${tails[i]} số<br>`;
+        if(heads[i]) headHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
+        if(tails[i]) tailHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
     }
-    document.getElementById('headStats').innerHTML = headHtml;
-    document.getElementById('tailStats').innerHTML = tailHtml;
+    document.getElementById('headStats').innerHTML = headHtml || 'Trống';
+    document.getElementById('tailStats').innerHTML = tailHtml || 'Trống';
 }
 </script>
 
