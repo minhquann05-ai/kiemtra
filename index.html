@@ -3,83 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Tập Hợp Số</title>
+    <title>Công cụ Phân tích Dãy số</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; }
+        body { font-family: sans-serif; margin: 20px; line-height: 1.6; background-color: #f4f4f9; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; }
-        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-bottom: 20px; }
-        button.num-btn { padding: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: bold; }
-        button.num-btn:hover { background: #e0e0e0; }
-        button.active { background: #2ecc71; color: white; border-color: #27ae60; }
-        #result { padding: 15px; border-radius: 4px; background: #e8f4fd; min-height: 50px; line-height: 1.6; }
-        h2 { color: #333; }
-        .label { font-weight: bold; color: #e74c3c; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .result { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .card { background: #e9ecef; padding: 15px; border-radius: 6px; }
+        .card h3 { margin-top: 0; color: #333; font-size: 1rem; border-bottom: 1px dotted #999; }
+        .highlight { font-weight: bold; color: #d9534f; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Công cụ kiểm tra số</h2>
-    
-    <label>1. Dán tập hợp số của bạn vào đây:</label>
-    <textarea id="dataInput" placeholder="Ví dụ: 0x: 17, 23... 1x: 07, 17..."></textarea>
+    <h2>Phân tích số lượng</h2>
+    <p>Dán dãy số của bạn vào đây (hỗ trợ cả chữ và số lẫn lộn):</p>
+    <textarea id="inputData" placeholder="Ví dụ: Đầu 0: 01 03 04..."></textarea>
+    <button onclick="analyzeNumbers()">Phân tích ngay</button>
 
-    <label>2. Chọn số cần kiểm tra (00-99):</label>
-    <div class="grid" id="numberGrid"></div>
-
-    <div id="result">
-        <i>Kết quả sẽ hiển thị ở đây sau khi bạn chọn số...</i>
+    <div id="output" class="result" style="display:none;">
+        <div class="card">
+            <h3>Tổng cộng</h3>
+            <p id="totalCount">Số lượng: <span class="highlight">0</span></p>
+        </div>
+        <div class="card">
+            <h3>Chẵn - Lẻ</h3>
+            <p>Chẵn: <span id="evenCount" class="highlight">0</span></p>
+            <p>Lẻ: <span id="oddCount" class="highlight">0</span></p>
+        </div>
+        <div class="card">
+            <h3>To - Nhỏ (Ngưỡng 50)</h3>
+            <p>To (>=50): <span id="bigCount" class="highlight">0</span></p>
+            <p>Nhỏ (<50): <span id="smallCount" class="highlight">0</span></p>
+        </div>
+        <div class="card">
+            <h3>Thống kê Đầu</h3>
+            <div id="headStats" style="font-size: 0.9rem;"></div>
+        </div>
+        <div class="card">
+            <h3>Thống kê Đuôi</h3>
+            <div id="tailStats" style="font-size: 0.9rem;"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    const grid = document.getElementById('numberGrid');
-    const input = document.getElementById('dataInput');
-    const resultDiv = document.getElementById('result');
-
-    // Tạo bảng số 00-99
-    for (let i = 0; i <= 99; i++) {
-        let btn = document.createElement('button');
-        btn.className = 'num-btn';
-        btn.innerText = i.toString().padStart(2, '0');
-        btn.onclick = () => checkNumber(btn.innerText, btn);
-        grid.appendChild(btn);
+function analyzeNumbers() {
+    const text = document.getElementById('inputData').value;
+    // Tìm tất cả các cụm 2 chữ số
+    const numbers = text.match(/\d{2}/g) || [];
+    
+    if (numbers.length === 0) {
+        alert("Không tìm thấy số nào hợp lệ (định dạng 2 chữ số)!");
+        return;
     }
 
-    function checkNumber(num, element) {
-        // Reset màu nút
-        document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
-        element.classList.add('active');
+    let even = 0, odd = 0, big = 0, small = 0;
+    let heads = {}, tails = {};
 
-        const text = input.value;
-        if (!text.trim()) {
-            resultDiv.innerHTML = "<span style='color:red'>Vui lòng dán dữ liệu vào ô trên trước!</span>";
-            return;
-        }
+    numbers.forEach(numStr => {
+        const n = parseInt(numStr);
+        const h = numStr[0]; // Chữ số đầu
+        const t = numStr[1]; // Chữ số đuôi
 
-        // Tách các dòng dựa trên định dạng (ví dụ: 0x:, 1x:...)
-        const lines = text.split(/\n/);
-        let foundIn = [];
+        // Đếm chẵn lẻ
+        if (n % 2 === 0) even++; else odd++;
+        
+        // Đếm to nhỏ (Quy ước phổ biến: 00-49 là nhỏ, 50-99 là to)
+        if (n >= 50) big++; else small++;
 
-        lines.forEach(line => {
-            if (line.includes(':')) {
-                const parts = line.split(':');
-                const label = parts[0].trim();
-                const numbers = parts[1].split(/[\s,]+/).map(n => n.trim());
+        // Đếm đầu đuôi
+        heads[h] = (heads[h] || 0) + 1;
+        tails[t] = (tails[t] || 0) + 1;
+    });
 
-                if (numbers.includes(num)) {
-                    foundIn.push(label);
-                }
-            }
-        });
+    // Hiển thị kết quả
+    document.getElementById('output').style.display = 'grid';
+    document.getElementById('totalCount').innerHTML = `Số lượng: <span class="highlight">${numbers.length}</span>`;
+    document.getElementById('evenCount').innerText = even;
+    document.getElementById('oddCount').innerText = odd;
+    document.getElementById('bigCount').innerText = big;
+    document.getElementById('smallCount').innerText = small;
 
-        if (foundIn.length > 0) {
-            resultDiv.innerHTML = `Số <b style="font-size:1.2em">${num}</b> xuất hiện trong: <br> <span class="label">${foundIn.join(', ')}</span>`;
-        } else {
-            resultDiv.innerHTML = `Số <b>${num}</b> <span style="color:gray">không xuất hiện</span> trong bất kỳ tập hợp nào.`;
-        }
+    // Render Đầu/Đuôi
+    let headHtml = '', tailHtml = '';
+    for(let i=0; i<=9; i++) {
+        if(heads[i]) headHtml += `Đầu ${i}: ${heads[i]} số<br>`;
+        if(tails[i]) tailHtml += `Đuôi ${i}: ${tails[i]} số<br>`;
     }
+    document.getElementById('headStats').innerHTML = headHtml;
+    document.getElementById('tailStats').innerHTML = tailHtml;
+}
 </script>
 
 </body>
