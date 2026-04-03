@@ -48,13 +48,13 @@
         </div>
         <div class="card">
             <h3>2-1</h3>
-            <p>Chẵn: <span id="evenCount" class="highlight">0</span></p>
-            <p>Lẻ: <span id="oddCount" class="highlight">0</span></p>
+            <p>2: <span id="evenCount" class="highlight">0</span></p>
+            <p>1: <span id="oddCount" class="highlight">0</span></p>
         </div>
         <div class="card">
             <h3>4-3(50)</h3>
-            <p>To: <span id="bigCount" class="highlight">0</span></p>
-            <p>Nhỏ: <span id="smallCount" class="highlight">0</span></p>
+            <p>4: <span id="bigCount" class="highlight">0</span></p>
+            <p>3: <span id="smallCount" class="highlight">0</span></p>
         </div>
         <div class="card">
             <h3>ầu</h3>
@@ -118,8 +118,8 @@ function analyzeNumbers() {
 
     let headHtml = '', tailHtml = '';
     for(let i=0; i<=9; i++) {
-        if(heads[i]) headHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
-        if(tails[i]) tailHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
+        if(heads[i]) headHtml += `ầu ${i}: <b>${heads[i]}</b><br>`;
+        if(tails[i]) tailHtml += `uôi ${i}: <b>${tails[i]}</b><br>`;
     }
     document.getElementById('headStats').innerHTML = headHtml || 'Trống';
     document.getElementById('tailStats').innerHTML = tailHtml || 'Trống';
