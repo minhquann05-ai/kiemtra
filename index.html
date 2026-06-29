@@ -140,7 +140,13 @@ function clearAll() {
 
 function analyzeNumbers() {
     const text = inputArea.value;
-    const numbers = text.match(/\d{2}/g) || [];
+    
+    // Lấy tất cả các số 2 chữ số
+    const rawNumbers = text.match(/\d{2}/g) || [];
+    
+    // Sử dụng Set để lọc số trùng lặp
+    const numbers = [...new Set(rawNumbers)];
+
     if (numbers.length === 0) {
         document.getElementById('output').style.display = 'none';
         return;
@@ -168,8 +174,8 @@ function analyzeNumbers() {
 
     let hHtml = '', tHtml = '';
     for(let i=0; i<=9; i++) {
-        if(heads[i]) hHtml += `ầ ${i}: <b>${heads[i]}</b><br>`;
-        if(tails[i]) tHtml += `uô ${i}: <b>${tails[i]}</b><br>`;
+        if(heads[i]) hHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
+        if(tails[i]) tHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
     }
     document.getElementById('headStats').innerHTML = hHtml || 'Trống';
     document.getElementById('tailStats').innerHTML = tHtml || 'Trống';
