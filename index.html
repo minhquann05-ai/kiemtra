@@ -6,22 +6,34 @@
     <title>Phân Tích Số - One Click</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { color: #1a73e8; text-align: center; margin-top: 0; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
         
-        textarea { width: 100%; height: 180px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; }
+        .input-wrapper { position: relative; margin-bottom: 15px; }
+        textarea { width: 100%; height: 180px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; resize: vertical; }
         textarea:focus { border-color: #1a73e8; outline: none; }
         
         .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic; min-height: 18px; }
-        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
         button { flex: 1; min-width: 120px; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 14px; }
         button:active { transform: scale(0.95); }
         
-        .btn-paste { background-color: #34a853; color: white; flex: 2; font-size: 16px; } /* Nút dán to hơn để dễ bấm */
+        .btn-paste { background-color: #34a853; color: white; flex: 2; font-size: 16px; }
         .btn-clear { background-color: #ea4335; color: white; }
+        .btn-ghost { background-color: #6c757d; color: white; }
+
+        .mode-select {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: bold; font-size: 14px;
+            background: #f8f9fa; padding: 8px 12px;
+            border-radius: 8px; border: 1px solid #ddd;
+        }
+        .mode-select select {
+            padding: 8px 12px; border-radius: 6px;
+            border: 1px solid #ccc; font-weight: bold; cursor: pointer;
+        }
 
         .result { display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
         .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #1a73e8; }
@@ -31,40 +43,48 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2>Phân Tích & Đồng Bộ</h2>
     <div id="syncStatus" class="status-sync">Đang kết nối Firebase...</div>
     
-    <textarea id="inputData" placeholder="Dữ liệu sẽ tự động phân tích khi bạn dán hoặc nhập..."></textarea>
+    <div class="input-wrapper" id="inputWrapper">
+        <textarea id="inputData" placeholder="Dữ liệu sẽ tự động phân tích khi bạn dán hoặc nhập..."></textarea>
+    </div>
     
     <div class="button-group">
         <button class="btn-paste" onclick="pasteAndAnalyze()">📋 DÁN & PHÂN TÍCH LUÔN</button>
         <button class="btn-clear" onclick="clearAll()">🗑️ XÓA HẾT</button>
-        <button class="btn-ghost" onclick="location.reload()" style="background-color: #6c757d; color: white;">🔄 TẢI LẠI (F5)</button>
+        <button class="btn-ghost" onclick="location.reload()">🔄 TẢI LẠI (F5)</button>
+        <div class="mode-select">
+            <label for="scratchMode">Chế độ:</label>
+            <select id="scratchMode" onchange="onModeChange()">
+                <option value="open">Mở (Hiện số)</option>
+                <option value="close">Đóng (Cào số)</option>
+            </select>
+        </div>
     </div>
 
     <div id="output" class="result">
         <div class="card">
-            <h3></h3>
+            <h3>Tổng</h3>
             <p id="totalCount" class="highlight">0</p>
         </div>
         <div class="card">
-            <h3></h3>
+            <h3>Chẵn / Lẻ</h3>
             <p>2: <span id="evenCount" class="highlight">0</span></p>
             <p>1: <span id="oddCount" class="highlight">0</span></p>
         </div>
         <div class="card">
-            <h3></h3>
+            <h3>Lớn / Nhỏ</h3>
             <p>4: <span id="bigCount" class="highlight">0</span></p>
             <p>3: <span id="smallCount" class="highlight">0</span></p>
         </div>
         <div class="card">
-            <h3></h3>
+            <h3>Đầu</h3>
             <div id="headStats" class="grid-list"></div>
         </div>
         <div class="card">
-            <h3></h3>
+            <h3>Đuôi</h3>
             <div id="tailStats" class="grid-list"></div>
         </div>
     </div>
@@ -79,13 +99,16 @@ const firebaseConfig = {
     messagingSenderId: "69318636254",
     appId: "1:69318636254:web:35a4a497ee50e6c718484f"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const docRef = db.collection("app_analysis").doc('current_data');
-
 const inputArea = document.getElementById('inputData');
+const inputWrapper = document.getElementById('inputWrapper');
 const syncStatus = document.getElementById('syncStatus');
+const outputDiv = document.getElementById('output');
+
+let scratchMode = 'open';
+let scratchCanvas = null;
 
 // Lưu Firebase
 async function saveToFirebase(content) {
@@ -103,6 +126,7 @@ inputArea.oninput = () => {
     typingTimer = setTimeout(() => {
         saveToFirebase(inputArea.value);
         analyzeNumbers();
+        if (scratchMode === 'close') updateScratchOverlay();
     }, 500);
 };
 
@@ -114,18 +138,20 @@ async function loadData() {
             inputArea.value = doc.data().text || "";
             syncStatus.innerText = "✅ Đã tải dữ liệu";
             analyzeNumbers();
+        } else {
+            syncStatus.innerText = "✅ Sẵn sàng";
         }
     } catch (e) { syncStatus.innerText = "❌ Lỗi kết nối"; }
 }
 
-// --- HÀM QUAN TRỌNG: BẤM 1 LẦN DÁN VÀ CHẠY LUÔN ---
+// Dán và phân tích
 async function pasteAndAnalyze() {
     try {
         const text = await navigator.clipboard.readText();
         inputArea.value = text;
-        // Chạy cùng lúc 2 việc: Lưu lên mạng và Phân tích ra màn hình
         saveToFirebase(text);
         analyzeNumbers();
+        if (scratchMode === 'close') updateScratchOverlay();
     } catch (err) {
         alert("Không thể truy cập bộ nhớ tạm. Hãy dùng phím tắt Ctrl+V.");
     }
@@ -134,21 +160,18 @@ async function pasteAndAnalyze() {
 function clearAll() {
     inputArea.value = '';
     saveToFirebase('');
-    document.getElementById('output').style.display = 'none';
+    outputDiv.style.display = 'none';
+    removeScratchCanvas();
     syncStatus.innerText = "🗑️ Đã xóa sạch";
 }
 
 function analyzeNumbers() {
     const text = inputArea.value;
-    
-    // Lấy tất cả các số 2 chữ số
     const rawNumbers = text.match(/\d{2}/g) || [];
-    
-    // Sử dụng Set để lọc số trùng lặp
     const numbers = [...new Set(rawNumbers)];
 
     if (numbers.length === 0) {
-        document.getElementById('output').style.display = 'none';
+        outputDiv.style.display = 'none';
         return;
     }
 
@@ -157,7 +180,7 @@ function analyzeNumbers() {
 
     numbers.forEach(numStr => {
         const n = parseInt(numStr);
-        const h = numStr[0]; 
+        const h = numStr[0];
         const t = numStr[1];
         if (n % 2 === 0) even++; else odd++;
         if (n >= 50) big++; else small++;
@@ -165,7 +188,7 @@ function analyzeNumbers() {
         tails[t] = (tails[t] || 0) + 1;
     });
 
-    document.getElementById('output').style.display = 'grid';
+    outputDiv.style.display = 'grid';
     document.getElementById('totalCount').innerText = numbers.length + " số";
     document.getElementById('evenCount').innerText = even;
     document.getElementById('oddCount').innerText = odd;
@@ -173,12 +196,114 @@ function analyzeNumbers() {
     document.getElementById('smallCount').innerText = small;
 
     let hHtml = '', tHtml = '';
-    for(let i=0; i<=9; i++) {
-        if(heads[i]) hHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
-        if(tails[i]) tHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
+    for (let i = 0; i <= 9; i++) {
+        if (heads[i]) hHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
+        if (tails[i]) tHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
     }
     document.getElementById('headStats').innerHTML = hHtml || 'Trống';
     document.getElementById('tailStats').innerHTML = tHtml || 'Trống';
+}
+
+function onModeChange() {
+    scratchMode = document.getElementById('scratchMode').value;
+    updateScratchOverlay();
+}
+
+function updateScratchOverlay() {
+    if (scratchMode === 'close') {
+        createScratchCanvas();
+    } else {
+        removeScratchCanvas();
+    }
+}
+
+function createScratchCanvas() {
+    removeScratchCanvas();
+
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '10';
+    canvas.style.cursor = 'crosshair';
+    canvas.style.touchAction = 'none';
+    canvas.style.borderRadius = '8px';
+    inputWrapper.appendChild(canvas);
+    scratchCanvas = canvas;
+
+    const ctx = canvas.getContext('2d');
+
+    function drawCover() {
+        const rect = inputWrapper.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#d4d4d4');
+        grad.addColorStop(0.5, '#a8a8a8');
+        grad.addColorStop(1, '#c0c0c0');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        for (let y = 0; y < canvas.height; y += 5) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = '#444';
+        ctx.font = 'bold 20px Segoe UI, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CÀO ĐỂ XEM SỐ', canvas.width / 2, canvas.height / 2 - 12);
+        ctx.font = '13px Segoe UI, Arial';
+        ctx.fillText('(Kéo chuột hoặc ngón tay)', canvas.width / 2, canvas.height / 2 + 16);
+    }
+
+    drawCover();
+
+    let drawing = false;
+    const brush = 28;
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+        return { x, y };
+    }
+
+    function erase(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, brush, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    canvas.addEventListener('mousedown', (e) => { drawing = true; erase(e); });
+    canvas.addEventListener('mousemove', erase);
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+
+    canvas.addEventListener('touchstart', (e) => { drawing = true; erase(e); }, { passive: false });
+    canvas.addEventListener('touchmove', erase, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+    canvas.addEventListener('touchcancel', () => drawing = false);
+
+    window.addEventListener('resize', drawCover);
+}
+
+function removeScratchCanvas() {
+    if (scratchCanvas) {
+        scratchCanvas.remove();
+        scratchCanvas = null;
+    }
 }
 
 loadData();
