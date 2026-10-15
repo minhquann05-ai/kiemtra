@@ -58,8 +58,8 @@
         <div class="mode-select">
             <label for="scratchMode">Chế độ:</label>
             <select id="scratchMode" onchange="onModeChange()">
+                <option value="close" selected>Đóng (Cào số)</option>
                 <option value="open">Mở (Hiện số)</option>
-                <option value="close">Đóng (Cào số)</option>
             </select>
         </div>
     </div>
@@ -107,7 +107,7 @@ const inputWrapper = document.getElementById('inputWrapper');
 const syncStatus = document.getElementById('syncStatus');
 const outputDiv = document.getElementById('output');
 
-let scratchMode = 'open';
+let scratchMode = 'close';
 let scratchCanvas = null;
 
 // Lưu Firebase
@@ -141,6 +141,10 @@ async function loadData() {
         } else {
             syncStatus.innerText = "✅ Sẵn sàng";
         }
+        // Áp dụng lớp cào nếu đang ở chế độ đóng
+        if (scratchMode === 'close') {
+            setTimeout(updateScratchOverlay, 100);
+        }
     } catch (e) { syncStatus.innerText = "❌ Lỗi kết nối"; }
 }
 
@@ -162,6 +166,7 @@ function clearAll() {
     saveToFirebase('');
     outputDiv.style.display = 'none';
     removeScratchCanvas();
+    if (scratchMode === 'close') updateScratchOverlay();
     syncStatus.innerText = "🗑️ Đã xóa sạch";
 }
 
@@ -267,7 +272,7 @@ function createScratchCanvas() {
     drawCover();
 
     let drawing = false;
-    const brush = 28;
+    const brush = 5; // Nét tẩy nhỏ
 
     function pos(e) {
         const r = canvas.getBoundingClientRect();
