@@ -1,397 +1,499 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Sequence Collector</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #38bdf8;
-      --accent2: #a78bfa;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --success: #34d399;
-      --danger: #f87171;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 24px;
-    }
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    h1 {
-      font-size: 2rem;
-      margin: 0 0 8px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .subtitle {
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .form-row {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: end;
-    }
-    label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    input[type="date"] {
-      background: #0f172a;
-      border: 1px solid #334155;
-      color: var(--text);
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 1rem;
-      outline: none;
-    }
-    input[type="date"]:focus {
-      border-color: var(--accent);
-    }
-    button {
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border: none;
-      color: #0f172a;
-      font-weight: 700;
-      padding: 12px 28px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .info {
-      background: rgba(56, 189, 248, 0.1);
-      border-left: 4px solid var(--accent);
-      padding: 12px 16px;
-      border-radius: 0 8px 8px 0;
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-top: 16px;
-    }
-    .numbers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-      gap: 10px;
-      margin-top: 16px;
-    }
-    .num-item {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 12px 8px;
-      text-align: center;
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--accent);
-      transition: all 0.2s;
-    }
-    .num-item:hover {
-      border-color: var(--accent);
-      transform: scale(1.05);
-    }
-    .stats {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .stat {
-      background: #0f172a;
-      padding: 12px 20px;
-      border-radius: 10px;
-    }
-    .stat .value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--success);
-    }
-    .stat .label {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    .details-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      font-size: 0.9rem;
-    }
-    .details-table th, .details-table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #334155;
-    }
-    .details-table th {
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .details-table tr:hover td {
-      background: rgba(255,255,255,0.03);
-    }
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--muted);
-    }
-    .error {
-      color: var(--danger);
-      background: rgba(248, 113, 113, 0.1);
-      padding: 12px;
-      border-radius: 8px;
-    }
-    .badge {
-      display: inline-block;
-      background: var(--accent);
-      color: #0f172a;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-    }
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 32px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Số - One Click</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; text-transform: uppercase; font-size: 20px; letter-spacing: 1px; }
+        
+        .input-wrapper { position: relative; margin-bottom: 15px; }
+        textarea { width: 100%; height: 180px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; box-sizing: border-box; font-size: 15px; transition: border-color 0.3s; resize: vertical; }
+        textarea:focus { border-color: #1a73e8; outline: none; }
+        
+        .status-sync { text-align: center; font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic; min-height: 18px; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+        button { flex: 1; min-width: 120px; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; font-size: 14px; }
+        button:active { transform: scale(0.95); }
+        
+        .btn-paste { background-color: #34a853; color: white; flex: 2; font-size: 16px; }
+        .btn-clear { background-color: #ea4335; color: white; }
+        .btn-ghost { background-color: #6c757d; color: white; }
+
+        .mode-select {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: bold; font-size: 14px;
+            background: #f8f9fa; padding: 8px 12px;
+            border-radius: 8px; border: 1px solid #ddd;
+        }
+        .mode-select select {
+            padding: 8px 12px; border-radius: 6px;
+            border: 1px solid #ccc; font-weight: bold; cursor: pointer;
+        }
+
+        .result { display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #1a73e8; }
+        .card h3 { margin: 0 0 10px 0; font-size: 0.9rem; color: #5f6368; text-transform: uppercase; }
+        .highlight { font-size: 1.4rem; font-weight: 800; color: #1a73e8; font-family: 'Courier New', Courier, monospace; }
+        .grid-list { font-family: monospace; font-size: 0.95rem; line-height: 1.6; color: #333; }
+
+        /* Box số lượng: luôn hiển thị, độc lập với kết quả phân tích */
+        .quantity-card { margin-top: 20px; }
+        .quantity-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .quantity-header h3 { margin: 0; }
+        .quantity-header button { flex: none; min-width: 0; padding: 10px 15px; }
+        .quantity-hint { font-size: 12px; color: #666; margin: 10px 0; }
+        .quantity-subtitle { font-size: 14px; margin: 16px 0 8px; color: #333; }
+        /* Mỗi chữ số đầu là một cột riêng, xếp từ trái sang phải. */
+        .pair-grid { display: grid; grid-template-columns: repeat(9, minmax(138px, 1fr)); gap: 7px; align-items: start; overflow-x: auto; padding-bottom: 8px; }
+        .pair-column { display: grid; gap: 7px; align-content: start; min-width: 0; }
+        .pair-column-title { text-align: center; font-size: 12px; font-weight: bold; color: #1a73e8; background: #eaf2ff; padding: 6px; border-radius: 5px; }
+        .container > h2, .container > #syncStatus, .container > .input-wrapper, .container > .button-group, .container > .result { max-width: 800px; margin-left: auto; margin-right: auto; }
+        .single-grid { display: grid; grid-template-columns: minmax(138px, 190px); gap: 7px; }
+        .quantity-item { display: flex; align-items: center; justify-content: space-between; gap: 5px; padding: 6px; border: 1px solid #e1e5eb; background: #f8f9fa; border-radius: 6px; }
+        .quantity-item.active { border-color: #1a73e8; background: #eaf2ff; }
+        .quantity-label { font: bold 14px monospace; white-space: nowrap; }
+        .quantity-controls { display: flex; align-items: center; gap: 3px; }
+        .quantity-controls button { flex: none; min-width: 0; width: 25px; height: 30px; padding: 0; border: 1px solid #d6dce5; border-radius: 5px; background: white; color: #1a73e8; font-size: 17px; }
+        .quantity-controls input { width: 36px; min-width: 0; height: 30px; padding: 0 2px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; text-align: center; font-size: 14px; font-weight: bold; font-family: monospace; appearance: textfield; }
+        .quantity-controls input::-webkit-inner-spin-button, .quantity-controls input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .quantity-card button:disabled, .quantity-card input:disabled { opacity: .5; cursor: not-allowed; }
+        #quantityStatus { margin: 12px 0 0; text-align: left; }
+        @media (max-width: 480px) { body { padding: 10px; } .container { padding: 12px; } .quantity-card { padding: 10px; } }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Weekly Sequence Collector</h1>
-      <p class="subtitle">Thu thập mẫu số theo chu kỳ tuần từ tập dữ liệu lịch sử</p>
-    </header>
-
-    <div class="card">
-      <div class="form-row">
-        <div>
-          <label for="dateInput">Chọn ngày tham chiếu</label>
-          <input type="date" id="dateInput" />
+<div class="container">
+    <h2>Phân Tích & Đồng Bộ</h2>
+    <div id="syncStatus" class="status-sync">Đang kết nối Firebase...</div>
+    
+    <div class="input-wrapper" id="inputWrapper">
+        <textarea id="inputData" placeholder="Dữ liệu sẽ tự động phân tích khi bạn dán hoặc nhập..."></textarea>
+    </div>
+    
+    <div class="button-group">
+        <button class="btn-paste" onclick="pasteAndAnalyze()">📋 DÁN & PHÂN TÍCH LUÔN</button>
+        <button class="btn-clear" onclick="clearAll()">🗑️ XÓA HẾT</button>
+        <button class="btn-ghost" onclick="location.reload()">🔄 TẢI LẠI (F5)</button>
+        <div class="mode-select">
+            <label for="scratchMode">Chế độ:</label>
+            <select id="scratchMode" onchange="onModeChange()">
+                <option value="close" selected>Đóng (Cào số)</option>
+                <option value="open">Mở (Hiện số)</option>
+            </select>
         </div>
-        <div>
-          <label for="digitSelect">Chọn chữ số đầu (0-9)</label>
-          <select id="digitSelect" style="background:#0f172a;border:1px solid #334155;color:var(--text);padding:12px 16px;border-radius:10px;font-size:1rem;outline:none;">
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4" selected>4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-          </select>
-        </div>
-        <button id="btnCalc" disabled>Thu thập</button>
-      </div>
-      <div class="info">
-        <strong>Quy tắc:</strong> Từ ngày tham chiếu, duyệt ngược lại theo bước <strong>7 ngày</strong> (cùng thứ trong tuần). 
-        Chỉ giữ lại những bản ghi có <strong>chữ số đầu tiên</strong> của mã 5 chữ số trùng với <strong>chữ số đầu đã chọn</strong>. 
-        Trích xuất <strong>2 chữ số cuối</strong> của mã đó và thu thập đủ <strong>69 giá trị không trùng</strong>.
-      </div>
     </div>
 
-    <div id="resultArea"></div>
+    <div id="output" class="result">
+        <div class="card">
+            <h3>Tổng</h3>
+            <p id="totalCount" class="highlight">0</p>
+        </div>
+        <div class="card">
+            <h3>Chẵn / Lẻ</h3>
+            <p>2: <span id="evenCount" class="highlight">0</span></p>
+            <p>1: <span id="oddCount" class="highlight">0</span></p>
+        </div>
+        <div class="card">
+            <h3>Lớn / Nhỏ</h3>
+            <p>4: <span id="bigCount" class="highlight">0</span></p>
+            <p>3: <span id="smallCount" class="highlight">0</span></p>
+        </div>
+        <div class="card">
+            <h3>Đầu</h3>
+            <div id="headStats" class="grid-list"></div>
+        </div>
+        <div class="card">
+            <h3>Đuôi</h3>
+            <div id="tailStats" class="grid-list"></div>
+        </div>
+    </div>
 
-    <footer>
-      Công cụ phân tích chuỗi số • Dữ liệu lịch sử công khai
-    </footer>
-  </div>
+    <section id="quantityBox" class="card quantity-card" aria-labelledby="quantityTitle">
+        <div class="quantity-header">
+            <h3 id="quantityTitle">Bảng chọn số lượng</h3>
+            <button type="button" id="resetQuantities" class="btn-clear" disabled>RESET VỀ 0</button>
+        </div>
+        <p class="quantity-hint">Bấm + / − hoặc nhập trực tiếp số lượng rồi nhấn Enter. Dữ liệu tự lưu lên Firebase.</p>
+        <h4 class="quantity-subtitle">Cặp số (45 cặp)</h4>
+        <div id="pairGrid" class="pair-grid"></div>
+        <h4 class="quantity-subtitle">Số riêng (0–9)</h4>
+        <div id="singleGrid" class="single-grid"></div>
+        <div id="quantityStatus" class="status-sync" role="status" aria-live="polite">Đang tải số lượng...</div>
+    </section>
+</div>
 
-  <script>
-    const DATA_URL = 'https://raw.githubusercontent.com/khiemdoan/vietnam-lottery-xsmb-analysis/refs/heads/main/data/xsmb.csv';
-    let dataMap = new Map();
-    let minDate = null;
-    let maxDate = null;
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyD-tbxT6acKrTgAqNxHyDZHW2gD06KX1CI",
+    authDomain: "my-work-a159e.firebaseapp.com",
+    projectId: "my-work-a159e",
+    storageBucket: "my-work-a159e.firebasestorage.app",
+    messagingSenderId: "69318636254",
+    appId: "1:69318636254:web:35a4a497ee50e6c718484f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const docRef = db.collection("app_analysis").doc('current_data');
+const inputArea = document.getElementById('inputData');
+const inputWrapper = document.getElementById('inputWrapper');
+const syncStatus = document.getElementById('syncStatus');
+const outputDiv = document.getElementById('output');
 
-    const dateInput = document.getElementById('dateInput');
-    const digitSelect = document.getElementById('digitSelect');
-    const btnCalc = document.getElementById('btnCalc');
-    const resultArea = document.getElementById('resultArea');
 
-    const today = new Date();
-    dateInput.valueAsDate = today;
+// Bảng số lượng riêng, lưu chung document nhưng không ghi đè trường text.
+const pairKeys = [];
+for (let i = 0; i < 9; i++) {
+    for (let j = i + 1; j <= 9; j++) pairKeys.push(`${i}-${j}`);
+}
+const singleKeys = Array.from({ length: 10 }, (_, i) => String(i));
+const quantityKeys = { pairQuantities: pairKeys, singleQuantities: singleKeys };
+const quantityValues = { pairQuantities: {}, singleQuantities: {} };
+const quantityRows = { pairQuantities: {}, singleQuantities: {} };
+const quantityStatus = document.getElementById('quantityStatus');
+const resetQuantityButton = document.getElementById('resetQuantities');
+let quantityReady = false;
+let pendingQuantityWrites = 0;
+let quantityWriteFailed = false;
 
-    async function loadData() {
-      resultArea.innerHTML = '<div class="loading">Đang tải tập dữ liệu...</div>';
-      try {
-        const res = await fetch(DATA_URL);
-        if (!res.ok) throw new Error('Không tải được dữ liệu');
-        const text = await res.text();
-        const lines = text.trim().split('\n');
-        for (let i = 1; i < lines.length; i++) {
-          const parts = lines[i].split(',');
-          if (parts.length < 2) continue;
-          const dateStr = parts[0].trim();
-          const value = parseInt(parts[1], 10);
-          if (!isNaN(value) && dateStr) {
-            dataMap.set(dateStr, value);
-            if (!minDate || dateStr < minDate) minDate = dateStr;
-            if (!maxDate || dateStr > maxDate) maxDate = dateStr;
-          }
+function normalizeQuantity(value) {
+    const n = Number(value);
+    return Number.isSafeInteger(n) && n >= 0 ? n : 0;
+}
+
+function renderQuantityRow(field, key, value) {
+    quantityValues[field][key] = value;
+    const row = quantityRows[field][key];
+    row.input.value = value;
+    row.item.classList.toggle('active', value > 0);
+    row.minus.disabled = !quantityReady || value === 0;
+    row.plus.disabled = !quantityReady || value >= Number.MAX_SAFE_INTEGER;
+    row.input.disabled = !quantityReady;
+}
+
+function buildQuantityGrid(field, containerId) {
+    const grid = document.getElementById(containerId);
+    const columns = {};
+    if (field === 'pairQuantities') {
+        for (let i = 0; i < 9; i++) {
+            const column = document.createElement('div');
+            column.className = 'pair-column';
+            const heading = document.createElement('div');
+            heading.className = 'pair-column-title';
+            heading.textContent = `Nhóm ${i}`;
+            column.appendChild(heading);
+            grid.appendChild(column);
+            columns[i] = column;
         }
-        btnCalc.disabled = false;
-        resultArea.innerHTML = `<div class="info">Đã tải ${dataMap.size} bản ghi (từ ${minDate} đến ${maxDate}). Chọn ngày và nhấn Thu thập.</div>`;
-      } catch (e) {
-        resultArea.innerHTML = `<div class="error">Lỗi tải dữ liệu: ${e.message}. Vui lòng thử lại.</div>`;
-      }
     }
+    quantityKeys[field].forEach(key => {
+        const item = document.createElement('div');
+        item.className = 'quantity-item';
+        const label = document.createElement('label');
+        label.className = 'quantity-label';
+        label.textContent = key + ':';
+        const controls = document.createElement('div');
+        controls.className = 'quantity-controls';
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', `Giảm số lượng ${key}`);
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = String(Number.MAX_SAFE_INTEGER);
+        input.step = '1';
+        input.inputMode = 'numeric';
+        input.id = `${field}-${key}`;
+        label.htmlFor = input.id;
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', `Tăng số lượng ${key}`);
+        controls.append(minus, input, plus);
+        item.append(label, controls);
+        const parent = field === 'pairQuantities' ? columns[key.split('-')[0]] : grid;
+        parent.appendChild(item);
+        quantityRows[field][key] = { item, input, minus, plus };
+        renderQuantityRow(field, key, 0);
+        minus.addEventListener('click', () => changeQuantity(field, key, quantityValues[field][key] - 1));
+        plus.addEventListener('click', () => changeQuantity(field, key, quantityValues[field][key] + 1));
+        input.addEventListener('change', () => {
+            const n = input.valueAsNumber;
+            changeQuantity(field, key, Number.isSafeInteger(n) && n >= 0 ? n : quantityValues[field][key]);
+        });
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+    });
+}
 
-    function pad5(n) {
-      return String(n).padStart(5, '0');
-    }
+function loadQuantities(data) {
+    quantityReady = true;
+    Object.keys(quantityKeys).forEach(field => {
+        quantityKeys[field].forEach(key => {
+            renderQuantityRow(field, key, normalizeQuantity(data[field]?.[key] ?? 0));
+        });
+    });
+    resetQuantityButton.disabled = false;
+    quantityStatus.textContent = '✅ Đã tải số lượng';
+}
 
-    function formatDate(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function getWeekdayName(d) {
-      const names = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-      return names[d.getDay()];
-    }
-
-    btnCalc.addEventListener('click', () => {
-      const selected = dateInput.valueAsDate;
-      if (!selected) return;
-
-      const targetDigit = parseInt(digitSelect.value, 10);
-      const weekday = getWeekdayName(selected);
-
-      const collected = [];
-      const seen = new Set();
-      let current = new Date(selected);
-      current.setHours(12, 0, 0, 0);
-
-      let steps = 0;
-      const maxSteps = 2000;
-
-      while (collected.length < 69 && steps < maxSteps) {
-        const dateStr = formatDate(current);
-        if (dataMap.has(dateStr)) {
-          const value = dataMap.get(dateStr);
-          const s = pad5(value);
-          const firstDigit = parseInt(s[0], 10);
-          if (firstDigit === targetDigit) {
-            const last2 = s.slice(-2);
-            if (!seen.has(last2)) {
-              seen.add(last2);
-              collected.push({
-                date: dateStr,
-                code: s,
-                last2: last2
-              });
-            }
-          }
+async function saveQuantities(patch) {
+    pendingQuantityWrites++;
+    quantityStatus.textContent = '☁️ Đang lưu số lượng...';
+    try {
+        // merge: true chỉ cập nhật các khóa đã chọn, giữ nguyên text và các khóa khác.
+        await docRef.set({ ...patch, quantityUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    } catch (e) {
+        quantityWriteFailed = true;
+        console.error('Lỗi lưu số lượng:', e);
+    } finally {
+        pendingQuantityWrites--;
+        if (pendingQuantityWrites === 0) {
+            quantityStatus.textContent = quantityWriteFailed
+                ? '❌ Có thay đổi chưa lưu được. Hãy kiểm tra Firebase và tải lại trước khi tiếp tục.'
+                : '✅ Đã lưu số lượng';
         }
-        current.setDate(current.getDate() - 7);
-        steps++;
-        if (dateStr < minDate) break;
-      }
+    }
+}
 
-      // Sắp xếp tăng dần theo 2 chữ số cuối
-      collected.sort((a, b) => a.last2.localeCompare(b.last2));
+function changeQuantity(field, key, value) {
+    if (!quantityReady) return;
+    const next = normalizeQuantity(Math.max(0, value));
+    const previous = quantityValues[field][key];
+    renderQuantityRow(field, key, next);
+    if (next !== previous) saveQuantities({ [field]: { [key]: next } });
+}
 
-      renderResult(collected, targetDigit, weekday, selected);
+function resetQuantities() {
+    if (!quantityReady) return;
+    const patch = {};
+    Object.keys(quantityKeys).forEach(field => {
+        patch[field] = {};
+        quantityKeys[field].forEach(key => {
+            renderQuantityRow(field, key, 0);
+            patch[field][key] = 0;
+        });
+    });
+    saveQuantities(patch);
+}
+
+buildQuantityGrid('pairQuantities', 'pairGrid');
+buildQuantityGrid('singleQuantities', 'singleGrid');
+resetQuantityButton.addEventListener('click', resetQuantities);
+
+let scratchMode = 'close';
+let scratchCanvas = null;
+
+// Lưu Firebase
+async function saveToFirebase(content) {
+    syncStatus.innerText = "☁️ Đang lưu...";
+    try {
+        await docRef.set({ text: content, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        syncStatus.innerText = "✅ Đã đồng bộ";
+    } catch (e) { syncStatus.innerText = "❌ Lỗi lưu"; }
+}
+
+// Tự động phân tích khi gõ tay
+let typingTimer;
+inputArea.oninput = () => {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        saveToFirebase(inputArea.value);
+        analyzeNumbers();
+        if (scratchMode === 'close') updateScratchOverlay();
+    }, 500);
+};
+
+// Tải dữ liệu ban đầu
+async function loadData() {
+    try {
+        const doc = await docRef.get();
+        if (doc.exists) {
+            inputArea.value = doc.data().text || "";
+            syncStatus.innerText = "✅ Đã tải dữ liệu";
+            analyzeNumbers();
+        } else {
+            syncStatus.innerText = "✅ Sẵn sàng";
+        }
+        loadQuantities(doc.exists ? doc.data() : {});
+        // Áp dụng lớp cào nếu đang ở chế độ đóng
+        if (scratchMode === 'close') {
+            setTimeout(updateScratchOverlay, 100);
+        }
+    } catch (e) {
+        syncStatus.innerText = "❌ Lỗi kết nối";
+        quantityStatus.textContent = "❌ Không tải được số lượng. Hãy tải lại trang để tránh ghi đè dữ liệu cũ.";
+    }
+}
+
+// Dán và phân tích
+async function pasteAndAnalyze() {
+    try {
+        const text = await navigator.clipboard.readText();
+        inputArea.value = text;
+        saveToFirebase(text);
+        analyzeNumbers();
+        if (scratchMode === 'close') updateScratchOverlay();
+    } catch (err) {
+        alert("Không thể truy cập bộ nhớ tạm. Hãy dùng phím tắt Ctrl+V.");
+    }
+}
+
+function clearAll() {
+    inputArea.value = '';
+    saveToFirebase('');
+    outputDiv.style.display = 'none';
+    removeScratchCanvas();
+    if (scratchMode === 'close') updateScratchOverlay();
+    syncStatus.innerText = "🗑️ Đã xóa sạch";
+}
+
+function analyzeNumbers() {
+    const text = inputArea.value;
+    const rawNumbers = text.match(/\d{2}/g) || [];
+    const numbers = [...new Set(rawNumbers)];
+
+    if (numbers.length === 0) {
+        outputDiv.style.display = 'none';
+        return;
+    }
+
+    let even = 0, odd = 0, big = 0, small = 0;
+    let heads = {}, tails = {};
+
+    numbers.forEach(numStr => {
+        const n = parseInt(numStr);
+        const h = numStr[0];
+        const t = numStr[1];
+        if (n % 2 === 0) even++; else odd++;
+        if (n >= 50) big++; else small++;
+        heads[h] = (heads[h] || 0) + 1;
+        tails[t] = (tails[t] || 0) + 1;
     });
 
-    function renderResult(items, targetDigit, weekday, selectedDate) {
-      if (items.length === 0) {
-        resultArea.innerHTML = `<div class="card"><div class="error">Không tìm thấy giá trị nào phù hợp với chữ số đầu <strong>${targetDigit}</strong> (${weekday}).</div></div>`;
-        return;
-      }
+    outputDiv.style.display = 'grid';
+    document.getElementById('totalCount').innerText = numbers.length + " số";
+    document.getElementById('evenCount').innerText = even;
+    document.getElementById('oddCount').innerText = odd;
+    document.getElementById('bigCount').innerText = big;
+    document.getElementById('smallCount').innerText = small;
 
-      const numsHtml = items.map(it => `<div class="num-item" title="${it.date} - ${it.code}">${it.last2}</div>`).join('');
+    let hHtml = '', tHtml = '';
+    for (let i = 0; i <= 9; i++) {
+        if (heads[i]) hHtml += `Đầu ${i}: <b>${heads[i]}</b><br>`;
+        if (tails[i]) tHtml += `Đuôi ${i}: <b>${tails[i]}</b><br>`;
+    }
+    document.getElementById('headStats').innerHTML = hHtml || 'Trống';
+    document.getElementById('tailStats').innerHTML = tHtml || 'Trống';
+}
 
-      const rows = items.map((it, idx) => `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${it.date}</td>
-          <td>${it.code}</td>
-          <td><strong>${it.last2}</strong></td>
-        </tr>
-      `).join('');
+function onModeChange() {
+    scratchMode = document.getElementById('scratchMode').value;
+    updateScratchOverlay();
+}
 
-      resultArea.innerHTML = `
-        <div class="card">
-          <div class="stats">
-            <div class="stat">
-              <div class="value">${items.length}</div>
-              <div class="label">Giá trị đã thu thập</div>
-            </div>
-            <div class="stat">
-              <div class="value">${targetDigit}</div>
-              <div class="label">Chữ số đầu đã chọn</div>
-            </div>
-            <div class="stat">
-              <div class="value">${weekday}</div>
-              <div class="label">Thứ</div>
-            </div>
-          </div>
-          <p style="color:var(--muted); margin:0 0 8px;">
-            Ngày tham chiếu: <strong>${formatDate(selectedDate)}</strong> 
-            ${items.length < 69 ? `<span class="badge" style="background:#f87171;color:#fff;">Chưa đủ 69</span>` : `<span class="badge">Đủ 69 giá trị</span>`}
-          </p>
-          <div class="numbers-grid">${numsHtml}</div>
-        </div>
-        <div class="card">
-          <h3 style="margin-top:0;">Chi tiết các bản ghi được chọn</h3>
-          <table class="details-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Ngày</th>
-                <th>Mã 5 chữ số</th>
-                <th>2 chữ số cuối</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      `;
+function updateScratchOverlay() {
+    if (scratchMode === 'close') {
+        createScratchCanvas();
+    } else {
+        removeScratchCanvas();
+    }
+}
+
+function createScratchCanvas() {
+    removeScratchCanvas();
+
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '10';
+    canvas.style.cursor = 'crosshair';
+    canvas.style.touchAction = 'none';
+    canvas.style.borderRadius = '8px';
+    inputWrapper.appendChild(canvas);
+    scratchCanvas = canvas;
+
+    const ctx = canvas.getContext('2d');
+
+    function drawCover() {
+        const rect = inputWrapper.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#d4d4d4');
+        grad.addColorStop(0.5, '#a8a8a8');
+        grad.addColorStop(1, '#c0c0c0');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        for (let y = 0; y < canvas.height; y += 5) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = '#444';
+        ctx.font = 'bold 20px Segoe UI, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CÀO ĐỂ XEM SỐ', canvas.width / 2, canvas.height / 2 - 12);
+        ctx.font = '13px Segoe UI, Arial';
+        ctx.fillText('(Kéo chuột hoặc ngón tay)', canvas.width / 2, canvas.height / 2 + 16);
     }
 
-    loadData();
-  </script>
+    drawCover();
+
+    let drawing = false;
+    const brush = 5; // Nét tẩy nhỏ
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+        return { x, y };
+    }
+
+    function erase(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, brush, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    canvas.addEventListener('mousedown', (e) => { drawing = true; erase(e); });
+    canvas.addEventListener('mousemove', erase);
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+
+    canvas.addEventListener('touchstart', (e) => { drawing = true; erase(e); }, { passive: false });
+    canvas.addEventListener('touchmove', erase, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+    canvas.addEventListener('touchcancel', () => drawing = false);
+
+    window.addEventListener('resize', drawCover);
+}
+
+function removeScratchCanvas() {
+    if (scratchCanvas) {
+        scratchCanvas.remove();
+        scratchCanvas = null;
+    }
+}
+
+loadData();
+</script>
 </body>
 </html>
